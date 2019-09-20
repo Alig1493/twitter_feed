@@ -1,0 +1,52 @@
+version: '3'
+
+services:
+
+  worker: &worker
+    build: .
+    volumes:
+      - ./twitter_feed:/twitter_feed
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    environment:
+      # Django settings overrides:
+      - ALLOWED_HOSTS=*
+      - DEBUG=True
+      - DATABASE_URL=postgres://twitter_feed:twitter_feed@db:5432/twitter_feed_database
+      - REDIS_URL=redis://redis:6379
+      - CELERY_TASK_ALWAYS_EAGER=True
+
+    command: celery -A twitter_feed worker --beat --loglevel=info
+
+  web:
+    <<: *worker
+
+    command: >
+      bash -c "urlwait &&
+               ./manage.py migrate &&
+               ./manage.py runserver 0.0.0.0:8001"
+    ports:
+      - "8001:8001"
+    stdin_open: true
+    tty: true
+
+  db:
+    image: postgres:11.2
+    environment:
+      - POSTGRES_USER=${DATABASE_USER:-twitter_feed}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD:-twitter_feed}
+      - POSTGRES_DB=twitter_feed_database
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - db:/var/lib/postgresql/data/pgdata
+    ports:
+      - 5432:5432
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+volumes:
+    db:
