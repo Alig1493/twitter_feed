@@ -44,7 +44,7 @@ six==1.12.0
 sqlparse==0.3.0
 traitlets==4.3.2
 uritemplate==3.0.0
-urllib3==1.24.2
+urllib3==1.26.5
 urlwait==0.4
 vine==1.3.0
 wcwidth==0.1.7
